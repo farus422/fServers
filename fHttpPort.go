@@ -43,7 +43,7 @@ func (hp *SHttpPort) ListenAndServe(portNo int) {
 		}()
 		if err := hp.httpServer.ListenAndServe(); err != nil {
 			if err != http.ErrServerClosed {
-				hp.publisher.Publish(flog.NewLog(flog.LOGLEVELError, "httpServer.ListenAndServe failed! err=%v", err))
+				hp.publisher.Publish(flog.Error("httpServer.ListenAndServe failed! err=%v", err))
 			}
 			// } else {
 			// 	hp.publisher.Publish(flog.NewLog(flog.LOGLEVELDebug, "SHttpPort closed")) ///////////////////////
@@ -81,7 +81,7 @@ func (hp *SHttpPort) wrapHttpHandleFunc(f func(http.ResponseWriter, *http.Reques
 			if err := recover(); err != nil {
 				if hp.publisher != nil {
 					// log := flog.NewLog(flog.LOGLEVELError, "").AddPanicCallstack(0, "fServers.(*SHttpPort).wrapHttpHandleFunc")
-					log := flog.NewLogPanic(flog.LOGLEVELError, "fServers.(*SHttpPort).wrapHttpHandleFunc", "")
+					log := flog.Panic(flog.LOGLEVELError, "fServers.(*SHttpPort).wrapHttpHandleFunc", "")
 					hp.publisher.Publish(log.SetCaption("%s() 發生panic, %v", log.GetFunctionName(), err))
 				}
 			}
