@@ -71,8 +71,8 @@ func (sv *SServerFrame) WaitForShutdown() {
 	for {
 		select {
 		// 等待退出訊號
-		case <-sv.exitChan:
-			PrintColorMsg(color.FgWhite, "get exit signal\n")
+		case s := <-sv.exitChan:
+			PrintColorMsg(color.FgWhite, "收到退出訊號：%s\n", s)
 			// 告知業務處理函式該退出了
 			if sv.eventCallback != nil {
 				sv.eventCallback.OnShutdown()
@@ -83,8 +83,13 @@ func (sv *SServerFrame) WaitForShutdown() {
 			// 等待業務處理函式全都退出
 			// sv.serverWG.Wait()
 			sv.cancel()
-			PrintColorMsg(color.FgWhite, "伺服器關機程序全部完成，3秒後返回")
-			time.Sleep(time.Second * 3)
+			PrintColorMsg(color.FgWhite, "伺服器關機程序全部完成，3秒後結束程序 . . .\n")
+			time.Sleep(time.Second * 1)
+			PrintColorMsg(color.FgWhite, "伺服器關機程序全部完成，2秒後結束程序 . . .\n")
+			time.Sleep(time.Second * 1)
+			PrintColorMsg(color.FgWhite, "伺服器關機程序全部完成，1秒後結束程序 . . .\n")
+			time.Sleep(time.Second * 1)
+			PrintColorMsg(color.FgWhite, "伺服器關機程序全部完成，結束程序\n")
 			return
 		}
 	}
