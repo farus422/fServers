@@ -2,6 +2,7 @@ package fservers
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
 
@@ -11,11 +12,12 @@ import (
 )
 
 type SHttpPort struct {
-	serverWG   *sync.WaitGroup
-	handlerWG  sync.WaitGroup
-	httpServer *http.Server
-	router     *mux.Router
-	publisher  *flog.SPublisher
+	serverWG  *sync.WaitGroup
+	handlerWG sync.WaitGroup
+	// httpServer *http.Server
+	listener  net.Listener
+	router    *mux.Router
+	publisher *flog.SPublisher
 }
 
 func CORSHandler(handler http.Handler) http.Handler {
@@ -29,11 +31,18 @@ func (hp *SHttpPort) Init(wg *sync.WaitGroup, publisher *flog.SPublisher) {
 	hp.router = mux.NewRouter()
 	hp.publisher = publisher
 }
-func (hp *SHttpPort) ListenAndServe(portNo int) {
-	hp.httpServer = &http.Server{
-		Addr:    fmt.Sprintf(":%d", portNo),
-		Handler: CORSHandler(hp.router),
+
+func (hp *SHttpPort) Listen(portNo int) bool {
+	var err error
+	hp.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", portNo))
+	if err != nil {
+		hp.publisher.Publish(flog.Error("Failed to listen to port %d! err=%v", portNo, err))
+		return false
 	}
+	return true
+}
+
+func (hp *SHttpPort) Serve() {
 	go func() {
 		hp.serverWG.Add(1)
 		hp.handlerWG.Add(1)
@@ -41,17 +50,45 @@ func (hp *SHttpPort) ListenAndServe(portNo int) {
 			hp.handlerWG.Done()
 			hp.serverWG.Done()
 		}()
-		if err := hp.httpServer.ListenAndServe(); err != nil {
-			if err != http.ErrServerClosed {
-				hp.publisher.Publish(flog.Error("httpServer.ListenAndServe failed! err=%v", err))
-			}
-			// } else {
-			// 	hp.publisher.Publish(flog.NewLog(flog.LOGLEVELDebug, "SHttpPort closed")) ///////////////////////
-			// }
-			return
-		}
+		http.Serve(hp.listener, CORSHandler(hp.router))
 	}()
 }
+
+func (hp *SHttpPort) ServeTLS(certFile, keyFile string) {
+	go func() {
+		hp.serverWG.Add(1)
+		hp.handlerWG.Add(1)
+		defer func() {
+			hp.handlerWG.Done()
+			hp.serverWG.Done()
+		}()
+		http.ServeTLS(hp.listener, CORSHandler(hp.router), certFile, keyFile)
+	}()
+}
+
+// func (hp *SHttpPort) ListenAndServe(portNo int) bool {
+// 	hp.httpServer = &http.Server{
+// 		Addr:    fmt.Sprintf(":%d", portNo),
+// 		Handler: CORSHandler(hp.router),
+// 	}
+// 	go func() {
+// 		hp.serverWG.Add(1)
+// 		hp.handlerWG.Add(1)
+// 		defer func() {
+// 			hp.handlerWG.Done()
+// 			hp.serverWG.Done()
+// 		}()
+// 		if err := hp.httpServer.ListenAndServe(); err != nil {
+// 			if err != http.ErrServerClosed {
+// 				hp.publisher.Publish(flog.Error("httpServer.ListenAndServe failed! err=%v", err))
+// 			}
+// 			// } else {
+// 			// 	hp.publisher.Publish(flog.NewLog(flog.LOGLEVELDebug, "SHttpPort closed")) ///////////////////////
+// 			// }
+// 			return
+// 		}
+// 	}()
+// }
 func (hp *SHttpPort) RouteFunc(path string, f func(http.ResponseWriter, *http.Request), methods ...string) {
 	if len(methods) == 0 {
 		hp.router.HandleFunc(path, hp.wrapHttpHandleFunc(f))
@@ -64,7 +101,8 @@ func (hp *SHttpPort) WaitForAllDone() {
 }
 
 func (hp *SHttpPort) Stop() {
-	hp.httpServer.Close()
+	// hp.httpServer.Close()
+	hp.listener.Close()
 }
 
 func (hp *SHttpPort) Shutdown() {
