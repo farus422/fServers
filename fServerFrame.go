@@ -15,8 +15,8 @@ import (
 )
 
 type IServerCallback interface {
-	OnInit()
-	OnRun()
+	OnInit() bool
+	OnRun() bool
 	OnStop()
 	OnShutdown()
 }
@@ -33,20 +33,22 @@ type SServerFrame struct {
 	// router     *mux.Router
 }
 
-func (sv *SServerFrame) Init(svcb IServerCallback) {
+func (sv *SServerFrame) Init(svcb IServerCallback) bool {
 	sv.exitChan = make(chan os.Signal, 1)
 	signal.Notify(sv.exitChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT, os.Interrupt, os.Kill)
 	sv.ctx, sv.cancel = context.WithCancel(context.Background())
 	sv.logManager = flog.NewManager(sv.ctx, &sv.serverWG)
 	sv.eventCallback = svcb
 	if svcb != nil {
-		svcb.OnInit()
+		return svcb.OnInit()
 	}
+	return true
 }
-func (sv *SServerFrame) Run() {
+func (sv *SServerFrame) Run() bool {
 	if sv.eventCallback != nil {
-		sv.eventCallback.OnRun()
+		return sv.eventCallback.OnRun()
 	}
+	return true
 }
 func (sv *SServerFrame) Stop() {
 	if sv.eventCallback != nil {
