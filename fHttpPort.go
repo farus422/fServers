@@ -33,13 +33,24 @@ func (hp *SHttpPort) Init(wg *sync.WaitGroup, publisher *flog.SPublisher) {
 }
 
 func (hp *SHttpPort) Listen(portNo int) bool {
+	hp.Unlisten()
 	var err error
 	hp.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", portNo))
 	if err != nil {
-		hp.publisher.Publish(flog.Error("Failed to listen to port %d! err=%v", portNo, err))
+		if hp.publisher != nil {
+			hp.publisher.Publish(flog.Error("Failed to listen to port %d! err=%v", portNo, err))
+		}
 		return false
 	}
 	return true
+}
+
+func (hp *SHttpPort) Unlisten() {
+	if hp.listener != nil {
+		ln := hp.listener
+		hp.listener = nil
+		ln.Close()
+	}
 }
 
 func (hp *SHttpPort) Serve() {
@@ -102,7 +113,7 @@ func (hp *SHttpPort) WaitForAllDone() {
 
 func (hp *SHttpPort) Stop() {
 	// hp.httpServer.Close()
-	hp.listener.Close()
+	hp.Unlisten()
 }
 
 func (hp *SHttpPort) Shutdown() {
