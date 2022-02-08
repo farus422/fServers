@@ -38,7 +38,7 @@ func (hp *SHttpPort) Listen(portNo int) bool {
 	hp.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", portNo))
 	if err != nil {
 		if hp.publisher != nil {
-			hp.publisher.Publish(flog.Error("Failed to listen to port %d! err=%v", portNo, err))
+			hp.publisher.Publish(flog.Error("Failed to listen to port %d. err=%v", portNo, err))
 		}
 		return false
 	}
