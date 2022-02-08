@@ -77,7 +77,7 @@ func (sv *SServerFrame) WaitForShutdown() {
 			if sv.eventCallback != nil {
 				sv.eventCallback.OnShutdown()
 			}
-			if sv.logManager.Shutdown(4000) == false {
+			if _, canceled := sv.logManager.Shutdown(4000, true); canceled == true {
 				PrintColorMsg(color.FgMagenta, "sv.logManager Shutdown timeout %d\n", 4000)
 			}
 			// 等待業務處理函式全都退出
@@ -85,11 +85,11 @@ func (sv *SServerFrame) WaitForShutdown() {
 			sv.cancel()
 			PrintColorMsg(color.FgWhite, "伺服器關機程序全部完成，3秒後結束程序 . . .\n")
 			time.Sleep(time.Second * 1)
-			PrintColorMsg(color.FgWhite, "伺服器關機程序全部完成，2秒後結束程序 . . .\n")
+			PrintColorMsg(color.FgWhite, "2秒後結束程序 . . .\n")
 			time.Sleep(time.Second * 1)
-			PrintColorMsg(color.FgWhite, "伺服器關機程序全部完成，1秒後結束程序 . . .\n")
+			PrintColorMsg(color.FgWhite, "1秒後結束程序 . . .\n")
 			time.Sleep(time.Second * 1)
-			PrintColorMsg(color.FgWhite, "伺服器關機程序全部完成，結束程序\n")
+			PrintColorMsg(color.FgWhite, "程序結束\n")
 			return
 		}
 	}
