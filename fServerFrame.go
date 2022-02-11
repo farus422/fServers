@@ -77,30 +77,30 @@ func (sv *SServerFrame) WaitForShutdown() {
 		select {
 		// 等待退出訊號
 		case s := <-sv.exitChan:
-			PrintColorMsg(color.FgWhite, "收到退出訊號：%s\n", s)
+			Cprintf(color.FgWhite, "收到退出訊號：%s\n", s)
 			// 告知業務處理函式該退出了
 			if sv.eventCallback != nil {
 				sv.eventCallback.OnShutdown()
 			}
 			if _, canceled := sv.logManager.Shutdown(4000, true); canceled == true {
-				PrintColorMsg(color.FgMagenta, "sv.logManager Shutdown timeout %d\n", 4000)
+				Cprintf(color.FgMagenta, "sv.logManager Shutdown timeout %d\n", 4000)
 			}
 			// 等待業務處理函式全都退出
 			// sv.serverWG.Wait()
 			sv.cancel()
-			PrintColorMsg(color.FgWhite, "伺服器關機程序全部完成，3秒後結束程序 . . .\n")
+			Cprintf(color.FgWhite, "伺服器關機程序全部完成，3秒後結束程序 . . .\n")
 			time.Sleep(time.Second * 1)
-			PrintColorMsg(color.FgWhite, "2秒後結束程序 . . .\n")
+			Cprintf(color.FgWhite, "2秒後結束程序 . . .\n")
 			time.Sleep(time.Second * 1)
-			PrintColorMsg(color.FgWhite, "1秒後結束程序 . . .\n")
+			Cprintf(color.FgWhite, "1秒後結束程序 . . .\n")
 			time.Sleep(time.Second * 1)
-			PrintColorMsg(color.FgWhite, "程序結束\n")
+			Cprintf(color.FgWhite, "程序結束\n")
 			return
 		}
 	}
 }
 
-func PrintColorMsg(clr color.Attribute, format string, param ...interface{}) {
+func Cprintf(clr color.Attribute, format string, param ...interface{}) {
 	if color.NoColor {
 		fmt.Printf(fmt.Sprintf("\x1b[%dm%s\x1b[0m", clr, format), param...)
 	} else {
