@@ -55,6 +55,9 @@ func (sv *SServerFrame) Stop() {
 		sv.eventCallback.OnStop()
 	}
 }
+func (sv *SServerFrame) Cancel() {
+	sv.cancel()
+}
 func (sv *SServerFrame) Shutdown() {
 	signal := &sShutdownSignal{msg: "shutdown"}
 	sv.exitChan <- signal
