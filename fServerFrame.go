@@ -76,25 +76,27 @@ func (sv *SServerFrame) WaitForShutdown() {
 	for {
 		select {
 		// 等待退出訊號
-		case s := <-sv.exitChan:
-			Cprintf(color.FgWhite, "收到退出訊號：%s\n", s)
-			// 告知業務處理函式該退出了
-			if sv.eventCallback != nil {
-				sv.eventCallback.OnShutdown()
+		case s, ok := <-sv.exitChan:
+			if ok {
+				Cprintf(color.FgWhite, "收到退出訊號：%s\n", s)
+				// 告知業務處理函式該退出了
+				if sv.eventCallback != nil {
+					sv.eventCallback.OnShutdown()
+				}
+				if _, canceled := sv.logManager.Shutdown(4000, true); canceled == true {
+					Cprintf(color.FgMagenta, "sv.logManager Shutdown timeout %d\n", 4000)
+				}
+				// 等待業務處理函式全都退出
+				// sv.serverWG.Wait()
+				sv.cancel()
+				Cprintf(color.FgWhite, "伺服器關機程序全部完成，3秒後結束程序 . . .\n")
+				time.Sleep(time.Second * 1)
+				Cprintf(color.FgWhite, "2秒後結束程序 . . .\n")
+				time.Sleep(time.Second * 1)
+				Cprintf(color.FgWhite, "1秒後結束程序 . . .\n")
+				time.Sleep(time.Second * 1)
+				Cprintf(color.FgWhite, "程序結束\n")
 			}
-			if _, canceled := sv.logManager.Shutdown(4000, true); canceled == true {
-				Cprintf(color.FgMagenta, "sv.logManager Shutdown timeout %d\n", 4000)
-			}
-			// 等待業務處理函式全都退出
-			// sv.serverWG.Wait()
-			sv.cancel()
-			Cprintf(color.FgWhite, "伺服器關機程序全部完成，3秒後結束程序 . . .\n")
-			time.Sleep(time.Second * 1)
-			Cprintf(color.FgWhite, "2秒後結束程序 . . .\n")
-			time.Sleep(time.Second * 1)
-			Cprintf(color.FgWhite, "1秒後結束程序 . . .\n")
-			time.Sleep(time.Second * 1)
-			Cprintf(color.FgWhite, "程序結束\n")
 			return
 		}
 	}
