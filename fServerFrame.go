@@ -35,7 +35,7 @@ type SServerFrame struct {
 
 func (sv *SServerFrame) Init(svcb IServerCallback) bool {
 	sv.exitChan = make(chan os.Signal, 1)
-	signal.Notify(sv.exitChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT, os.Interrupt, os.Kill)
+	signal.Notify(sv.exitChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGKILL)
 	sv.ctx, sv.cancel = context.WithCancel(context.Background())
 	sv.logManager = flog.NewManager(sv.ctx, &sv.serverWG)
 	sv.eventCallback = svcb
